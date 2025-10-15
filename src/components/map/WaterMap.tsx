@@ -9,8 +9,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Trash2, Circle, Square, PenTool } from 'lucide-react';
+import { Trash2, Circle, Square, PenTool, Sparkles } from 'lucide-react';
 import { useFilterStore } from '@/stores/filterStore';
+import { useWaterAnalysis } from '@/hooks/useWaterAnalysis';
+import { AnalysisPanel } from './AnalysisPanel';
 
 export const WaterMap = () => {
   const mapDiv = useRef<HTMLDivElement>(null);
@@ -18,7 +20,8 @@ export const WaterMap = () => {
   const [sketchVM, setSketchVM] = useState<SketchViewModel | null>(null);
   const [bufferSize, setBufferSize] = useState([500]);
   const [selectedFeatures, setSelectedFeatures] = useState<Graphic[]>([]);
-  const { region } = useFilterStore();
+  const { region, period, waterBodyType } = useFilterStore();
+  const { analyzeWaterBody, isAnalyzing, result } = useWaterAnalysis();
 
   useEffect(() => {
     if (!mapDiv.current) return;
@@ -186,6 +189,28 @@ export const WaterMap = () => {
     }
   };
 
+  const handleAnalyze = async () => {
+    if (view && selectedFeatures.length > 0) {
+      const graphicsLayer = view.map.layers.find((l) => l.title === 'Sketches') as GraphicsLayer;
+      const graphics = graphicsLayer?.graphics.toArray() || [];
+      
+      if (graphics.length === 0) {
+        return;
+      }
+
+      // Prendre la dernière géométrie dessinée
+      const lastGraphic = graphics[graphics.length - 1];
+      const geometry = lastGraphic.geometry;
+
+      await analyzeWaterBody(geometry, {
+        region,
+        period,
+        waterBodyType,
+        bufferSize: bufferSize[0],
+      });
+    }
+  };
+
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       <div className="lg:col-span-2">
@@ -253,6 +278,15 @@ export const WaterMap = () => {
             </div>
 
             <Button
+              onClick={handleAnalyze}
+              disabled={isAnalyzing || selectedFeatures.length === 0}
+              className="w-full gap-2"
+            >
+              <Sparkles className="h-4 w-4" />
+              {isAnalyzing ? 'Analyse en cours...' : 'Analyser avec IA'}
+            </Button>
+
+            <Button
               variant="destructive"
               size="sm"
               onClick={handleClear}
@@ -266,9 +300,9 @@ export const WaterMap = () => {
 
         <Card className="shadow-soft">
           <CardHeader>
-            <CardTitle className="text-foreground">Résultats</CardTitle>
+            <CardTitle className="text-foreground">Géométries</CardTitle>
             <CardDescription className="text-muted-foreground">
-              Géométries sélectionnées
+              Éléments dessinés
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -290,20 +324,27 @@ export const WaterMap = () => {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Aucune sélection
+                Aucune géométrie dessinée
               </p>
             )}
 
             <div className="mt-4 p-3 rounded bg-muted/30 border border-border">
               <p className="text-xs font-medium text-muted-foreground mb-1">
-                Région active
+                Filtres actifs
               </p>
-              <p className="text-sm font-semibold text-foreground capitalize">
-                {region === 'all' ? 'Toutes les régions' : region}
-              </p>
+              <div className="space-y-1">
+                <p className="text-sm text-foreground capitalize">
+                  {region === 'all' ? 'Toutes les régions' : region}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {waterBodyType === 'all' ? 'Tous types' : waterBodyType}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        <AnalysisPanel result={result} isAnalyzing={isAnalyzing} />
       </div>
     </div>
   );

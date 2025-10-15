@@ -1,6 +1,5 @@
 import { Droplets, TrendingUp, AlertTriangle, Activity } from 'lucide-react';
 import { StatsCard } from '@/components/dashboard/StatsCard';
-import { WaterMap } from '@/components/map/WaterMap';
 import { useFilterStore } from '@/stores/filterStore';
 
 export const Dashboard = () => {
@@ -48,9 +47,6 @@ export const Dashboard = () => {
           trend={{ value: 3, isPositive: true }}
         />
       </div>
-
-      {/* Water Map with ArcGIS */}
-      <WaterMap />
     </div>
   );
 };

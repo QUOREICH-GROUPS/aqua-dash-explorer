@@ -1,9 +1,12 @@
-import { Waves, Menu } from 'lucide-react';
+import { Waves, Menu, LayoutDashboard, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export const Header = () => {
   const { toggleSidebar } = useSidebar();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -32,14 +35,23 @@ export const Header = () => {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="ghost" size="sm">
-            Tableau de bord
+          <Button 
+            variant={location.pathname === '/' ? 'default' : 'ghost'} 
+            size="sm"
+            onClick={() => navigate('/')}
+            className="gap-2"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            Dashboard
           </Button>
-          <Button variant="ghost" size="sm">
-            Rapports
-          </Button>
-          <Button variant="default" size="sm">
-            Exporter
+          <Button 
+            variant={location.pathname === '/map' ? 'default' : 'ghost'} 
+            size="sm"
+            onClick={() => navigate('/map')}
+            className="gap-2"
+          >
+            <Map className="h-4 w-4" />
+            Carte IA
           </Button>
         </div>
       </div>

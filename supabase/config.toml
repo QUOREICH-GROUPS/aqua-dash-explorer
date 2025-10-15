@@ -1,0 +1,4 @@
+project_id = "srsmdererxbkfuyocjrg"
+
+[functions.water-analysis-ai]
+verify_jwt = false
