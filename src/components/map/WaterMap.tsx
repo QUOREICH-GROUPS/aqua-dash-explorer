@@ -11,8 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Trash2, Circle, Square, PenTool, Sparkles } from 'lucide-react';
 import { useFilterStore } from '@/stores/filterStore';
+import { useMapStore } from '@/stores/mapStore';
 import { useWaterAnalysis } from '@/hooks/useWaterAnalysis';
 import { AnalysisPanel } from './AnalysisPanel';
+import { MapControls } from './MapControls';
 
 export const WaterMap = () => {
   const mapDiv = useRef<HTMLDivElement>(null);
@@ -21,6 +23,7 @@ export const WaterMap = () => {
   const [bufferSize, setBufferSize] = useState([500]);
   const [selectedFeatures, setSelectedFeatures] = useState<Graphic[]>([]);
   const { region, period, waterBodyType } = useFilterStore();
+  const { setView: setMapView } = useMapStore();
   const { analyzeWaterBody, isAnalyzing, result } = useWaterAnalysis();
 
   useEffect(() => {
@@ -131,9 +134,11 @@ export const WaterMap = () => {
 
     setView(sceneView);
     setSketchVM(sketch);
+    setMapView(sceneView);
 
     return () => {
       sceneView.destroy();
+      setMapView(null);
     };
   }, []);
 
@@ -343,6 +348,8 @@ export const WaterMap = () => {
             </div>
           </CardContent>
         </Card>
+
+        <MapControls />
 
         <AnalysisPanel result={result} isAnalyzing={isAnalyzing} />
       </div>

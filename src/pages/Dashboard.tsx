@@ -1,5 +1,6 @@
 import { Droplets, TrendingUp, AlertTriangle, Activity } from 'lucide-react';
 import { StatsCard } from '@/components/dashboard/StatsCard';
+import { IndicatorsTable } from '@/components/dashboard/IndicatorsTable';
 import { useFilterStore } from '@/stores/filterStore';
 
 export const Dashboard = () => {
@@ -47,6 +48,9 @@ export const Dashboard = () => {
           trend={{ value: 3, isPositive: true }}
         />
       </div>
+
+      {/* Indicators Table */}
+      <IndicatorsTable />
     </div>
   );
 };
