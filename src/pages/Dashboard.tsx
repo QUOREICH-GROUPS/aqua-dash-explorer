@@ -21,29 +21,29 @@ export const Dashboard = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Surface totale"
-          value="105k ha"
-          description="Cumul de tous les plans d'eau"
+          value="45,230 ha"
+          description="Zone analysée"
           icon={Droplets}
-          trend={{ value: 2.5, isPositive: false }}
+          trend={{ value: 2.5, isPositive: true }}
         />
         <StatsCard
-          title="Variation moyenne"
-          value="-3.2%"
-          description="Évolution sur la période"
+          title="Rendement moyen"
+          value="2.8 t/ha"
+          description="Toutes cultures confondues"
           icon={TrendingUp}
-          trend={{ value: 3.2, isPositive: false }}
+          trend={{ value: 5.2, isPositive: true }}
         />
         <StatsCard
           title="Alertes actives"
-          value="13"
+          value="3"
           description="Nécessitent une attention"
           icon={AlertTriangle}
           trend={{ value: 15, isPositive: false }}
         />
         <StatsCard
-          title="Suivi actif"
-          value="956"
-          description="Plans d'eau surveillés"
+          title="Parcelles"
+          value="5"
+          description="Dans la zone analysée"
           icon={Activity}
           trend={{ value: 3, isPositive: true }}
         />
