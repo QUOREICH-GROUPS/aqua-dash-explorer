@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import SceneView from '@arcgis/core/views/SceneView';
 import Map from '@arcgis/core/Map';
 import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer';
+import FeatureLayer from '@arcgis/core/layers/FeatureLayer';
 import SketchViewModel from '@arcgis/core/widgets/Sketch/SketchViewModel';
 import * as geometryEngine from '@arcgis/core/geometry/geometryEngine';
 import Graphic from '@arcgis/core/Graphic';
+import Polygon from '@arcgis/core/geometry/Polygon';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -33,22 +35,154 @@ export const WaterMap = () => {
     const graphicsLayer = new GraphicsLayer({ title: 'Sketches' });
     const bufferLayer = new GraphicsLayer({ title: 'Buffers' });
 
-    // Create map
-    const map = new Map({
-      basemap: 'hybrid',
-      ground: 'world-elevation',
-      layers: [bufferLayer, graphicsLayer],
+    // Couche des régions administratives du Burkina Faso
+    const regionsLayer = new FeatureLayer({
+      url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/BFA_Admin_Boundaries/FeatureServer/1',
+      title: 'Régions du Burkina Faso',
+      outFields: ['*'],
+      renderer: {
+        type: 'simple',
+        symbol: {
+          type: 'simple-fill',
+          color: [0, 0, 0, 0],
+          outline: {
+            color: [255, 255, 255, 0.8],
+            width: 2,
+          },
+        },
+      },
+      popupTemplate: {
+        title: '{ADM1_FR}',
+        content: 'Région: {ADM1_FR}<br>Province: {ADM2_FR}',
+      },
     });
 
-    // Create 3D scene view
+    // Couche des zones de production agricole
+    const agricultureLayer = new FeatureLayer({
+      source: [
+        new Graphic({
+          geometry: new Polygon({
+            rings: [[[-2.5, 13.5], [-2.5, 13.0], [-2.0, 13.0], [-2.0, 13.5], [-2.5, 13.5]]],
+            spatialReference: { wkid: 4326 },
+          }),
+          attributes: { ObjectID: 1, type_culture: 'Maïs', rendement_moyen: 2.5, superficie_ha: 15000 },
+        }),
+        new Graphic({
+          geometry: new Polygon({
+            rings: [[[-1.5, 12.5], [-1.5, 12.0], [-1.0, 12.0], [-1.0, 12.5], [-1.5, 12.5]]],
+            spatialReference: { wkid: 4326 },
+          }),
+          attributes: { ObjectID: 2, type_culture: 'Mil', rendement_moyen: 1.8, superficie_ha: 12000 },
+        }),
+        new Graphic({
+          geometry: new Polygon({
+            rings: [[[-0.5, 11.5], [-0.5, 11.0], [0.0, 11.0], [0.0, 11.5], [-0.5, 11.5]]],
+            spatialReference: { wkid: 4326 },
+          }),
+          attributes: { ObjectID: 3, type_culture: 'Coton', rendement_moyen: 3.2, superficie_ha: 18000 },
+        }),
+        new Graphic({
+          geometry: new Polygon({
+            rings: [[[-3.0, 12.0], [-3.0, 11.5], [-2.5, 11.5], [-2.5, 12.0], [-3.0, 12.0]]],
+            spatialReference: { wkid: 4326 },
+          }),
+          attributes: { ObjectID: 4, type_culture: 'Riz', rendement_moyen: 4.5, superficie_ha: 8000 },
+        }),
+        new Graphic({
+          geometry: new Polygon({
+            rings: [[[-1.0, 13.0], [-1.0, 12.5], [-0.5, 12.5], [-0.5, 13.0], [-1.0, 13.0]]],
+            spatialReference: { wkid: 4326 },
+          }),
+          attributes: { ObjectID: 5, type_culture: 'Sorgho', rendement_moyen: 2.0, superficie_ha: 14000 },
+        }),
+      ],
+      objectIdField: 'ObjectID',
+      geometryType: 'polygon',
+      spatialReference: { wkid: 4326 },
+      title: 'Zones de Production Agricole',
+      fields: [
+        { name: 'ObjectID', type: 'oid' },
+        { name: 'type_culture', type: 'string' },
+        { name: 'rendement_moyen', type: 'double' },
+        { name: 'superficie_ha', type: 'double' },
+      ],
+      renderer: {
+        type: 'unique-value',
+        field: 'type_culture',
+        uniqueValueInfos: [
+          {
+            value: 'Maïs',
+            symbol: {
+              type: 'simple-fill',
+              color: [255, 235, 59, 0.6],
+              outline: { color: [255, 193, 7], width: 1 },
+            },
+          },
+          {
+            value: 'Mil',
+            symbol: {
+              type: 'simple-fill',
+              color: [205, 220, 57, 0.6],
+              outline: { color: [175, 180, 43], width: 1 },
+            },
+          },
+          {
+            value: 'Coton',
+            symbol: {
+              type: 'simple-fill',
+              color: [255, 255, 255, 0.7],
+              outline: { color: [200, 200, 200], width: 1 },
+            },
+          },
+          {
+            value: 'Riz',
+            symbol: {
+              type: 'simple-fill',
+              color: [76, 175, 80, 0.6],
+              outline: { color: [56, 142, 60], width: 1 },
+            },
+          },
+          {
+            value: 'Sorgho',
+            symbol: {
+              type: 'simple-fill',
+              color: [255, 152, 0, 0.6],
+              outline: { color: [230, 81, 0], width: 1 },
+            },
+          },
+        ],
+      },
+      popupTemplate: {
+        title: 'Zone de production: {type_culture}',
+        content: [
+          {
+            type: 'fields',
+            fieldInfos: [
+              { fieldName: 'type_culture', label: 'Type de culture' },
+              { fieldName: 'rendement_moyen', label: 'Rendement moyen (t/ha)' },
+              { fieldName: 'superficie_ha', label: 'Superficie (ha)' },
+            ],
+          },
+        ],
+      },
+    });
+
+    // Create map
+    const map = new Map({
+      basemap: 'satellite',
+      ground: 'world-elevation',
+      layers: [regionsLayer, agricultureLayer, bufferLayer, graphicsLayer],
+    });
+
+    // Create 3D scene view centered on Burkina Faso
     const sceneView = new SceneView({
       container: mapDiv.current,
       map: map,
       camera: {
         position: {
-          longitude: 2.3522,
-          latitude: 48.8566,
-          z: 500000,
+          longitude: -1.5,
+          latitude: 12.3,
+          z: 800000,
         },
         tilt: 45,
       },
