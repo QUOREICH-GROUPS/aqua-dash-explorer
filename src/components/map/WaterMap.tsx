@@ -35,65 +35,72 @@ export const WaterMap = () => {
     const graphicsLayer = new GraphicsLayer({ title: 'Sketches' });
     const bufferLayer = new GraphicsLayer({ title: 'Buffers' });
 
-    // Couche des régions administratives du Burkina Faso
+    // Couche des régions administratives du Burkina Faso (World Administrative Divisions)
     const regionsLayer = new FeatureLayer({
-      url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/BFA_Admin_Boundaries/FeatureServer/1',
+      url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Administrative_Divisions/FeatureServer/0',
       title: 'Régions du Burkina Faso',
+      definitionExpression: "ISO = 'BFA' AND LEVEL = 1", // Filtre pour le Burkina Faso, niveau régional
+      opacity: 0.5,
       outFields: ['*'],
       renderer: {
         type: 'simple',
         symbol: {
           type: 'simple-fill',
-          color: [0, 0, 0, 0],
+          color: [255, 255, 255, 0.1],
           outline: {
-            color: [255, 255, 255, 0.8],
-            width: 2,
-          },
-        },
+            color: [0, 122, 194, 0.8],
+            width: 2
+          }
+        }
       },
       popupTemplate: {
-        title: '{ADM1_FR}',
-        content: 'Région: {ADM1_FR}<br>Province: {ADM2_FR}',
+        title: '{NAME}',
+        content: 'Région: {NAME}<br>Pays: {COUNTRY}',
       },
     });
 
-    // Couche des zones de production agricole
+    // Zones de production agricole du Burkina Faso - géométries réalistes basées sur les régions
     const agricultureLayer = new FeatureLayer({
       source: [
+        // Zone Centre - Maïs (autour d'Ouagadougou)
         new Graphic({
           geometry: new Polygon({
-            rings: [[[-2.5, 13.5], [-2.5, 13.0], [-2.0, 13.0], [-2.0, 13.5], [-2.5, 13.5]]],
+            rings: [[[-1.7, 12.5], [-1.3, 12.5], [-1.3, 12.1], [-1.7, 12.1], [-1.7, 12.5]]],
             spatialReference: { wkid: 4326 },
           }),
-          attributes: { ObjectID: 1, type_culture: 'Maïs', rendement_moyen: 2.5, superficie_ha: 15000 },
+          attributes: { ObjectID: 1, type_culture: 'Maïs', rendement_moyen: 2.8, superficie_ha: 12500 },
         }),
+        // Zone Est - Coton (région de Fada N'Gourma)
         new Graphic({
           geometry: new Polygon({
-            rings: [[[-1.5, 12.5], [-1.5, 12.0], [-1.0, 12.0], [-1.0, 12.5], [-1.5, 12.5]]],
+            rings: [[[0.2, 11.5], [1.2, 11.5], [1.2, 11.0], [0.2, 11.0], [0.2, 11.5]]],
             spatialReference: { wkid: 4326 },
           }),
-          attributes: { ObjectID: 2, type_culture: 'Mil', rendement_moyen: 1.8, superficie_ha: 12000 },
+          attributes: { ObjectID: 2, type_culture: 'Coton', rendement_moyen: 1.8, superficie_ha: 15200 },
         }),
+        // Zone Hauts-Bassins - Riz (région de Bobo-Dioulasso)
         new Graphic({
           geometry: new Polygon({
-            rings: [[[-0.5, 11.5], [-0.5, 11.0], [0.0, 11.0], [0.0, 11.5], [-0.5, 11.5]]],
+            rings: [[[-4.8, 11.4], [-4.0, 11.4], [-4.0, 10.8], [-4.8, 10.8], [-4.8, 11.4]]],
             spatialReference: { wkid: 4326 },
           }),
-          attributes: { ObjectID: 3, type_culture: 'Coton', rendement_moyen: 3.2, superficie_ha: 18000 },
+          attributes: { ObjectID: 3, type_culture: 'Riz', rendement_moyen: 3.2, superficie_ha: 8900 },
         }),
+        // Zone Centre-Nord - Mil (région de Kaya)
         new Graphic({
           geometry: new Polygon({
-            rings: [[[-3.0, 12.0], [-3.0, 11.5], [-2.5, 11.5], [-2.5, 12.0], [-3.0, 12.0]]],
+            rings: [[[-2.0, 13.5], [-1.0, 13.5], [-1.0, 12.8], [-2.0, 12.8], [-2.0, 13.5]]],
             spatialReference: { wkid: 4326 },
           }),
-          attributes: { ObjectID: 4, type_culture: 'Riz', rendement_moyen: 4.5, superficie_ha: 8000 },
+          attributes: { ObjectID: 4, type_culture: 'Mil', rendement_moyen: 1.2, superficie_ha: 18700 },
         }),
+        // Zone Sud-Ouest - Sorgho (région de Gaoua)
         new Graphic({
           geometry: new Polygon({
-            rings: [[[-1.0, 13.0], [-1.0, 12.5], [-0.5, 12.5], [-0.5, 13.0], [-1.0, 13.0]]],
+            rings: [[[-3.5, 11.2], [-2.5, 11.2], [-2.5, 10.5], [-3.5, 10.5], [-3.5, 11.2]]],
             spatialReference: { wkid: 4326 },
           }),
-          attributes: { ObjectID: 5, type_culture: 'Sorgho', rendement_moyen: 2.0, superficie_ha: 14000 },
+          attributes: { ObjectID: 5, type_culture: 'Sorgho', rendement_moyen: 1.5, superficie_ha: 10300 },
         }),
       ],
       objectIdField: 'ObjectID',
@@ -174,19 +181,20 @@ export const WaterMap = () => {
       layers: [regionsLayer, agricultureLayer, bufferLayer, graphicsLayer],
     });
 
-    // Create 3D scene view centered on Burkina Faso
+    // Vue 3D centrée sur le Burkina Faso avec coordonnées géographiques précises
     const sceneView = new SceneView({
       container: mapDiv.current,
       map: map,
       camera: {
         position: {
-          longitude: -1.5,
-          latitude: 12.3,
-          z: 800000,
+          longitude: -1.5584, // Longitude centrale du Burkina Faso
+          latitude: 12.2395,  // Latitude centrale du Burkina Faso
+          z: 1000000 // Altitude pour voir tout le pays (1000 km)
         },
         tilt: 45,
+        heading: 0
       },
-      qualityProfile: 'high',
+      qualityProfile: 'high'
     });
 
     // Initialize SketchViewModel
