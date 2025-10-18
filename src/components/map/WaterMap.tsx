@@ -14,9 +14,11 @@ import { Badge } from '@/components/ui/badge';
 import { Trash2, Circle, Square, PenTool, Sparkles } from 'lucide-react';
 import { useFilterStore } from '@/stores/filterStore';
 import { useMapStore } from '@/stores/mapStore';
+import { useAnalysisStore } from '@/stores/analysisStore';
 import { useWaterAnalysis } from '@/hooks/useWaterAnalysis';
 import { AnalysisPanel } from './AnalysisPanel';
 import { MapControls } from './MapControls';
+import { WeatherWidget } from './WeatherWidget';
 
 export const WaterMap = () => {
   const mapDiv = useRef<HTMLDivElement>(null);
@@ -27,6 +29,7 @@ export const WaterMap = () => {
   const { region, period, waterBodyType } = useFilterStore();
   const { setView: setMapView } = useMapStore();
   const { analyzeWaterBody, isAnalyzing, result } = useWaterAnalysis();
+  const { setCurrentAnalysis, setAgricultureStats, setWeatherData, addToHistory } = useAnalysisStore();
 
   useEffect(() => {
     if (!mapDiv.current) return;
@@ -349,12 +352,30 @@ export const WaterMap = () => {
       const lastGraphic = graphics[graphics.length - 1];
       const geometry = lastGraphic.geometry;
 
-      await analyzeWaterBody(geometry, {
+      const analysisResult = await analyzeWaterBody(geometry, {
         region,
         period,
         waterBodyType,
         bufferSize: bufferSize[0],
       });
+
+      if (analysisResult) {
+        // Mettre à jour le store avec les résultats
+        setCurrentAnalysis(analysisResult);
+        
+        if (analysisResult.agricultureStats) {
+          setAgricultureStats(analysisResult.agricultureStats);
+        }
+        
+        if (analysisResult.weatherData) {
+          setWeatherData(analysisResult.weatherData);
+        }
+        
+        // Ajouter à l'historique
+        if (analysisResult.agricultureStats) {
+          addToHistory(analysisResult, analysisResult.agricultureStats, region);
+        }
+      }
     }
   };
 
@@ -492,6 +513,8 @@ export const WaterMap = () => {
         </Card>
 
         <MapControls />
+
+        <WeatherWidget />
 
         <AnalysisPanel result={result} isAnalyzing={isAnalyzing} />
       </div>

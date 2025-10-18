@@ -1,10 +1,14 @@
 import { Droplets, TrendingUp, AlertTriangle, Activity } from 'lucide-react';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { IndicatorsTable } from '@/components/dashboard/IndicatorsTable';
+import { AgricultureCharts } from '@/components/dashboard/AgricultureCharts';
+import { AnalysisHistory } from '@/components/dashboard/AnalysisHistory';
 import { useFilterStore } from '@/stores/filterStore';
+import { useAnalysisStore } from '@/stores/analysisStore';
 
 export const Dashboard = () => {
   const { region, waterBodyType } = useFilterStore();
+  const { currentAnalysis, agricultureStats } = useAnalysisStore();
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -21,36 +25,42 @@ export const Dashboard = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard
           title="Surface totale"
-          value="45,230 ha"
+          value={agricultureStats ? `${agricultureStats.totalSurface.toLocaleString()} ha` : '45,230 ha'}
           description="Zone analysée"
           icon={Droplets}
-          trend={{ value: 2.5, isPositive: true }}
+          trend={{ value: currentAnalysis?.surface.variation || 2.5, isPositive: (currentAnalysis?.surface.variation || 2.5) > 0 }}
         />
         <StatsCard
           title="Rendement moyen"
-          value="2.8 t/ha"
+          value={agricultureStats ? `${agricultureStats.averageYield.toFixed(1)} t/ha` : '2.8 t/ha'}
           description="Toutes cultures confondues"
           icon={TrendingUp}
           trend={{ value: 5.2, isPositive: true }}
         />
         <StatsCard
           title="Alertes actives"
-          value="3"
+          value={currentAnalysis?.alerts.length.toString() || '3'}
           description="Nécessitent une attention"
           icon={AlertTriangle}
           trend={{ value: 15, isPositive: false }}
         />
         <StatsCard
           title="Parcelles"
-          value="5"
+          value={agricultureStats?.totalParcelles.toString() || '5'}
           description="Dans la zone analysée"
           icon={Activity}
           trend={{ value: 3, isPositive: true }}
         />
       </div>
 
+      {/* Agriculture Charts */}
+      <AgricultureCharts />
+
       {/* Indicators Table */}
       <IndicatorsTable />
+
+      {/* Analysis History */}
+      <AnalysisHistory />
     </div>
   );
 };
