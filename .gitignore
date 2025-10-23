@@ -1,0 +1,41 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+
+# Ignorer les environnements virtuels
+venv/
+backend/venv/
+
+# Ignorer les fichiers d'environnement
+.env
+*.env
+
+# Ignorer les fichiers système
+*.Zone.Identifier
+
+# Ignorer les fichiers temporaires ou caches
+__pycache__/
+*.pyc
+node_modules/
