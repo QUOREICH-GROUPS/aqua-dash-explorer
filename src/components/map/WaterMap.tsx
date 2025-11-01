@@ -7,6 +7,7 @@ import SketchViewModel from '@arcgis/core/widgets/Sketch/SketchViewModel';
 import * as geometryEngine from '@arcgis/core/geometry/geometryEngine';
 import Graphic from '@arcgis/core/Graphic';
 import Polygon from '@arcgis/core/geometry/Polygon';
+import Geometry from '@arcgis/core/geometry/Geometry';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,7 @@ import { useWaterAnalysis } from '@/hooks/useWaterAnalysis';
 import { AnalysisPanel } from './AnalysisPanel';
 import { MapControls } from './MapControls';
 import { WeatherWidget } from './WeatherWidget';
+import { ZoneConfirmationDialog } from './ZoneConfirmationDialog';
 
 export const WaterMap = () => {
   const mapDiv = useRef<HTMLDivElement>(null);
@@ -26,6 +28,8 @@ export const WaterMap = () => {
   const [sketchVM, setSketchVM] = useState<SketchViewModel | null>(null);
   const [bufferSize, setBufferSize] = useState([500]);
   const [selectedFeatures, setSelectedFeatures] = useState<Graphic[]>([]);
+  const [pendingGeometry, setPendingGeometry] = useState<Geometry | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const { region, period, waterBodyType } = useFilterStore();
   const { setView: setMapView } = useMapStore();
   const { analyzeWaterBody, isAnalyzing, result } = useWaterAnalysis();
@@ -59,6 +63,59 @@ export const WaterMap = () => {
       popupTemplate: {
         title: '{NAME}',
         content: 'Région: {NAME}<br>Pays: {COUNTRY}',
+      },
+    });
+
+    // Couche des routes principales (OpenStreetMap via ArcGIS)
+    const roadsLayer = new FeatureLayer({
+      url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Transport_Service/FeatureServer/0',
+      title: 'Routes Principales',
+      definitionExpression: "COUNTRY = 'Burkina Faso'",
+      opacity: 0.7,
+      renderer: {
+        type: 'simple',
+        symbol: {
+          type: 'simple-line',
+          color: [255, 170, 0],
+          width: 2
+        }
+      },
+      visible: true,
+    });
+
+    // Couche des villes et localités
+    const citiesLayer = new FeatureLayer({
+      url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Cities/FeatureServer/0',
+      title: 'Villes',
+      definitionExpression: "CNTRY_NAME = 'Burkina Faso'",
+      renderer: {
+        type: 'simple',
+        symbol: {
+          type: 'simple-marker',
+          color: [255, 255, 255],
+          size: 8,
+          outline: {
+            color: [0, 122, 194],
+            width: 2
+          }
+        }
+      },
+      labelingInfo: [{
+        labelExpressionInfo: { expression: "$feature.CITY_NAME" },
+        symbol: {
+          type: 'text',
+          color: [255, 255, 255],
+          haloColor: [0, 0, 0],
+          haloSize: 1,
+          font: {
+            size: 10,
+            weight: 'bold'
+          }
+        }
+      }],
+      popupTemplate: {
+        title: '{CITY_NAME}',
+        content: 'Population: {POP}<br>Rang: {POP_RANK}',
       },
     });
 
@@ -181,7 +238,7 @@ export const WaterMap = () => {
     const map = new Map({
       basemap: 'satellite',
       ground: 'world-elevation',
-      layers: [regionsLayer, agricultureLayer, bufferLayer, graphicsLayer],
+      layers: [regionsLayer, roadsLayer, citiesLayer, agricultureLayer, bufferLayer, graphicsLayer],
     });
 
     // Vue 3D centrée sur le Burkina Faso avec coordonnées géographiques précises
@@ -251,6 +308,10 @@ export const WaterMap = () => {
             });
             bufferLayer.add(bufferGraphic);
           }
+          
+          // Show confirmation dialog
+          setPendingGeometry(geometry);
+          setShowConfirmDialog(true);
         }
       }
     });
@@ -339,49 +400,54 @@ export const WaterMap = () => {
     }
   };
 
-  const handleAnalyze = async () => {
-    if (view && selectedFeatures.length > 0) {
-      const graphicsLayer = view.map.layers.find((l) => l.title === 'Sketches') as GraphicsLayer;
-      const graphics = graphicsLayer?.graphics.toArray() || [];
+  const handleConfirmAnalysis = async () => {
+    setShowConfirmDialog(false);
+    
+    if (!pendingGeometry) return;
+
+    const analysisResult = await analyzeWaterBody(pendingGeometry, {
+      region,
+      period,
+      waterBodyType,
+      bufferSize: bufferSize[0],
+    });
+
+    if (analysisResult) {
+      setCurrentAnalysis(analysisResult);
       
-      if (graphics.length === 0) {
-        return;
+      if (analysisResult.agricultureStats) {
+        setAgricultureStats(analysisResult.agricultureStats);
       }
-
-      // Prendre la dernière géométrie dessinée
-      const lastGraphic = graphics[graphics.length - 1];
-      const geometry = lastGraphic.geometry;
-
-      const analysisResult = await analyzeWaterBody(geometry, {
-        region,
-        period,
-        waterBodyType,
-        bufferSize: bufferSize[0],
-      });
-
-      if (analysisResult) {
-        // Mettre à jour le store avec les résultats
-        setCurrentAnalysis(analysisResult);
-        
-        if (analysisResult.agricultureStats) {
-          setAgricultureStats(analysisResult.agricultureStats);
-        }
-        
-        if (analysisResult.weatherData) {
-          setWeatherData(analysisResult.weatherData);
-        }
-        
-        // Ajouter à l'historique
-        if (analysisResult.agricultureStats) {
-          addToHistory(analysisResult, analysisResult.agricultureStats, region);
-        }
+      
+      if (analysisResult.weatherData) {
+        setWeatherData(analysisResult.weatherData);
+      }
+      
+      if (analysisResult.agricultureStats) {
+        addToHistory(analysisResult, analysisResult.agricultureStats, region);
       }
     }
+    
+    setPendingGeometry(null);
+  };
+
+  const handleCancelAnalysis = () => {
+    setShowConfirmDialog(false);
+    setPendingGeometry(null);
+    handleClear();
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      <div className="lg:col-span-2">
+    <>
+      <ZoneConfirmationDialog
+        open={showConfirmDialog}
+        geometry={pendingGeometry}
+        onConfirm={handleConfirmAnalysis}
+        onCancel={handleCancelAnalysis}
+      />
+      
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
         <Card className="shadow-soft overflow-hidden">
           <div ref={mapDiv} className="h-[600px] w-full" />
         </Card>
@@ -444,15 +510,6 @@ export const WaterMap = () => {
                 className="w-full"
               />
             </div>
-
-            <Button
-              onClick={handleAnalyze}
-              disabled={isAnalyzing || selectedFeatures.length === 0}
-              className="w-full gap-2"
-            >
-              <Sparkles className="h-4 w-4" />
-              {isAnalyzing ? 'Analyse en cours...' : 'Analyser avec IA'}
-            </Button>
 
             <Button
               variant="destructive"
@@ -519,5 +576,6 @@ export const WaterMap = () => {
         <AnalysisPanel result={result} isAnalyzing={isAnalyzing} />
       </div>
     </div>
+    </>
   );
 };
