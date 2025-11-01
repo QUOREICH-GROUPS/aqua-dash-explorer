@@ -21,6 +21,7 @@ import { AnalysisPanel } from './AnalysisPanel';
 import { MapControls } from './MapControls';
 import { WeatherWidget } from './WeatherWidget';
 import { ZoneConfirmationDialog } from './ZoneConfirmationDialog';
+import { LayersControl } from './LayersControl';
 
 export const WaterMap = () => {
   const mapDiv = useRef<HTMLDivElement>(null);
@@ -42,18 +43,18 @@ export const WaterMap = () => {
     const graphicsLayer = new GraphicsLayer({ title: 'Sketches' });
     const bufferLayer = new GraphicsLayer({ title: 'Buffers' });
 
-    // Couche des régions administratives du Burkina Faso (World Administrative Divisions)
+    // Couches des limites administratives du Burkina Faso
     const regionsLayer = new FeatureLayer({
       url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Administrative_Divisions/FeatureServer/0',
       title: 'Régions du Burkina Faso',
-      definitionExpression: "ISO = 'BFA' AND LEVEL = 1", // Filtre pour le Burkina Faso, niveau régional
+      definitionExpression: "ISO = 'BFA' AND LEVEL = 1",
       opacity: 0.5,
       outFields: ['*'],
       renderer: {
         type: 'simple',
         symbol: {
           type: 'simple-fill',
-          color: [255, 255, 255, 0.1],
+          color: [0, 122, 194, 0.15],
           outline: {
             color: [0, 122, 194, 0.8],
             width: 2
@@ -61,8 +62,56 @@ export const WaterMap = () => {
         }
       },
       popupTemplate: {
-        title: '{NAME}',
+        title: 'Région: {NAME}',
         content: 'Région: {NAME}<br>Pays: {COUNTRY}',
+      },
+    });
+
+    const provincesLayer = new FeatureLayer({
+      url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Administrative_Divisions/FeatureServer/0',
+      title: 'Provinces du Burkina Faso',
+      definitionExpression: "ISO = 'BFA' AND LEVEL = 2",
+      opacity: 0.4,
+      visible: false,
+      outFields: ['*'],
+      renderer: {
+        type: 'simple',
+        symbol: {
+          type: 'simple-fill',
+          color: [76, 175, 80, 0.1],
+          outline: {
+            color: [76, 175, 80, 0.8],
+            width: 1.5
+          }
+        }
+      },
+      popupTemplate: {
+        title: 'Province: {NAME}',
+        content: 'Province: {NAME}<br>Région: {PARENT}',
+      },
+    });
+
+    const communesLayer = new FeatureLayer({
+      url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Administrative_Divisions/FeatureServer/0',
+      title: 'Communes du Burkina Faso',
+      definitionExpression: "ISO = 'BFA' AND LEVEL = 3",
+      opacity: 0.3,
+      visible: false,
+      outFields: ['*'],
+      renderer: {
+        type: 'simple',
+        symbol: {
+          type: 'simple-fill',
+          color: [255, 152, 0, 0.08],
+          outline: {
+            color: [255, 152, 0, 0.6],
+            width: 1
+          }
+        }
+      },
+      popupTemplate: {
+        title: 'Commune: {NAME}',
+        content: 'Commune: {NAME}<br>Province: {PARENT}',
       },
     });
 
@@ -116,6 +165,63 @@ export const WaterMap = () => {
       popupTemplate: {
         title: '{CITY_NAME}',
         content: 'Population: {POP}<br>Rang: {POP_RANK}',
+      },
+    });
+
+    // Couche des rivières et cours d'eau
+    const riversLayer = new FeatureLayer({
+      url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Hydro_Reference_Overlay/FeatureServer/0',
+      title: 'Rivières et Cours d\'eau',
+      definitionExpression: "1=1",
+      opacity: 0.8,
+      renderer: {
+        type: 'simple',
+        symbol: {
+          type: 'simple-line',
+          color: [0, 191, 255],
+          width: 2,
+          style: 'solid'
+        }
+      },
+      popupTemplate: {
+        title: 'Cours d\'eau',
+        content: 'Type: {TYPE}<br>Nom: {NAME}',
+      },
+    });
+
+    // Couche d'occupation du sol (ESA WorldCover)
+    const landCoverLayer = new FeatureLayer({
+      url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/ESA_WorldCover_2021_v200/FeatureServer/0',
+      title: 'Occupation du Sol',
+      opacity: 0.6,
+      visible: false,
+      popupTemplate: {
+        title: 'Occupation du sol',
+        content: 'Type: {LANDCOVER_TYPE}<br>Description: {DESCRIPTION}',
+      },
+    });
+
+    // Couche de densité de population (WorldPop estimations)
+    const populationLayer = new FeatureLayer({
+      url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Population_Density/FeatureServer/0',
+      title: 'Densité de Population',
+      definitionExpression: "CNTRY_NAME = 'Burkina Faso'",
+      opacity: 0.6,
+      visible: false,
+      renderer: {
+        type: 'simple',
+        symbol: {
+          type: 'simple-fill',
+          color: [255, 0, 0, 0.3],
+          outline: {
+            color: [255, 0, 0, 0.5],
+            width: 0.5
+          }
+        }
+      },
+      popupTemplate: {
+        title: 'Densité de population',
+        content: 'Population: {POP}<br>Densité: {DENSITY} hab/km²',
       },
     });
 
@@ -234,11 +340,23 @@ export const WaterMap = () => {
       },
     });
 
-    // Create map
+    // Create map with all layers
     const map = new Map({
       basemap: 'satellite',
       ground: 'world-elevation',
-      layers: [regionsLayer, roadsLayer, citiesLayer, agricultureLayer, bufferLayer, graphicsLayer],
+      layers: [
+        populationLayer,
+        landCoverLayer,
+        communesLayer,
+        provincesLayer,
+        regionsLayer,
+        riversLayer,
+        roadsLayer,
+        citiesLayer,
+        agricultureLayer,
+        bufferLayer,
+        graphicsLayer
+      ],
     });
 
     // Vue 3D centrée sur le Burkina Faso avec coordonnées géographiques précises
@@ -454,6 +572,8 @@ export const WaterMap = () => {
       </div>
 
       <div className="space-y-4">
+        <LayersControl view={view} />
+        
         <Card className="shadow-soft">
           <CardHeader>
             <CardTitle className="text-foreground">Outils de dessin</CardTitle>
