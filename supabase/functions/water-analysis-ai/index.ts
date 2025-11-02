@@ -5,13 +5,58 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Données des zones agricoles du Burkina Faso
+// Données agricoles réalistes du Burkina Faso (sources: FAOSTAT, INSD)
 const agricultureZones = [
-  { type: 'Maïs', rendement: 2.8, superficie: 12500, bounds: { minLon: -1.7, maxLon: -1.3, minLat: 12.1, maxLat: 12.5 } },
-  { type: 'Coton', rendement: 1.8, superficie: 15200, bounds: { minLon: 0.2, maxLon: 1.2, minLat: 11.0, maxLat: 11.5 } },
-  { type: 'Riz', rendement: 3.2, superficie: 8900, bounds: { minLon: -4.8, maxLon: -4.0, minLat: 10.8, maxLat: 11.4 } },
-  { type: 'Mil', rendement: 1.2, superficie: 18700, bounds: { minLon: -2.0, maxLon: -1.0, minLat: 12.8, maxLat: 13.5 } },
-  { type: 'Sorgho', rendement: 1.5, superficie: 10300, bounds: { minLon: -3.5, maxLon: -2.5, minLat: 10.5, maxLat: 11.2 } },
+  // Région des Hauts-Bassins (Bobo-Dioulasso) - Principale zone cotonnière
+  { type: 'Coton', rendement: 1.2, superficie: 185000, bounds: { minLon: -4.5, maxLon: -3.8, minLat: 11.0, maxLat: 11.6 }, region: 'Hauts-Bassins' },
+  { type: 'Maïs', rendement: 2.1, superficie: 95000, bounds: { minLon: -4.5, maxLon: -3.8, minLat: 11.0, maxLat: 11.6 }, region: 'Hauts-Bassins' },
+  
+  // Région de la Boucle du Mouhoun (Dédougou) - Coton et céréales
+  { type: 'Coton', rendement: 1.3, superficie: 165000, bounds: { minLon: -3.8, maxLon: -2.8, minLat: 11.8, maxLat: 12.8 }, region: 'Boucle du Mouhoun' },
+  { type: 'Maïs', rendement: 1.9, superficie: 78000, bounds: { minLon: -3.8, maxLon: -2.8, minLat: 11.8, maxLat: 12.8 }, region: 'Boucle du Mouhoun' },
+  { type: 'Sorgho', rendement: 1.1, superficie: 52000, bounds: { minLon: -3.8, maxLon: -2.8, minLat: 11.8, maxLat: 12.8 }, region: 'Boucle du Mouhoun' },
+  
+  // Région des Cascades (Banfora) - Fruits et coton
+  { type: 'Coton', rendement: 1.4, superficie: 45000, bounds: { minLon: -5.2, maxLon: -4.5, minLat: 10.2, maxLat: 10.9 }, region: 'Cascades' },
+  { type: 'Mangues', rendement: 8.5, superficie: 12000, bounds: { minLon: -5.2, maxLon: -4.5, minLat: 10.2, maxLat: 10.9 }, region: 'Cascades' },
+  { type: 'Canne à sucre', rendement: 45.0, superficie: 8500, bounds: { minLon: -5.2, maxLon: -4.5, minLat: 10.2, maxLat: 10.9 }, region: 'Cascades' },
+  
+  // Région du Centre (Ouagadougou) - Maraîchage et céréales
+  { type: 'Maïs', rendement: 1.8, superficie: 42000, bounds: { minLon: -1.8, maxLon: -1.0, minLat: 12.1, maxLat: 12.6 }, region: 'Centre' },
+  { type: 'Sorgho', rendement: 1.2, superficie: 38000, bounds: { minLon: -1.8, maxLon: -1.0, minLat: 12.1, maxLat: 12.6 }, region: 'Centre' },
+  { type: 'Niébé', rendement: 0.6, superficie: 15000, bounds: { minLon: -1.8, maxLon: -1.0, minLat: 12.1, maxLat: 12.6 }, region: 'Centre' },
+  
+  // Région du Centre-Nord (Kaya) - Mil et sorgho
+  { type: 'Mil', rendement: 0.9, superficie: 125000, bounds: { minLon: -1.5, maxLon: -0.5, minLat: 12.8, maxLat: 13.5 }, region: 'Centre-Nord' },
+  { type: 'Sorgho', rendement: 1.0, superficie: 85000, bounds: { minLon: -1.5, maxLon: -0.5, minLat: 12.8, maxLat: 13.5 }, region: 'Centre-Nord' },
+  { type: 'Arachide', rendement: 0.8, superficie: 32000, bounds: { minLon: -1.5, maxLon: -0.5, minLat: 12.8, maxLat: 13.5 }, region: 'Centre-Nord' },
+  
+  // Région du Nord (Ouahigouya) - Mil, sorgho, arachides
+  { type: 'Mil', rendement: 0.8, superficie: 98000, bounds: { minLon: -2.8, maxLon: -2.0, minLat: 13.2, maxLat: 13.8 }, region: 'Nord' },
+  { type: 'Sorgho', rendement: 0.9, superficie: 72000, bounds: { minLon: -2.8, maxLon: -2.0, minLat: 13.2, maxLat: 13.8 }, region: 'Nord' },
+  { type: 'Arachide', rendement: 0.9, superficie: 28000, bounds: { minLon: -2.8, maxLon: -2.0, minLat: 13.2, maxLat: 13.8 }, region: 'Nord' },
+  
+  // Région du Sahel (Dori) - Élevage et cultures de subsistance
+  { type: 'Mil', rendement: 0.5, superficie: 45000, bounds: { minLon: -0.5, maxLon: 1.0, minLat: 13.8, maxLat: 14.5 }, region: 'Sahel' },
+  { type: 'Niébé', rendement: 0.4, superficie: 18000, bounds: { minLon: -0.5, maxLon: 1.0, minLat: 13.8, maxLat: 14.5 }, region: 'Sahel' },
+  
+  // Région de l'Est (Fada N'Gourma) - Sésame et mil
+  { type: 'Sésame', rendement: 0.5, superficie: 35000, bounds: { minLon: 0.0, maxLon: 1.2, minLat: 11.8, maxLat: 12.5 }, region: 'Est' },
+  { type: 'Mil', rendement: 1.0, superficie: 65000, bounds: { minLon: 0.0, maxLon: 1.2, minLat: 11.8, maxLat: 12.5 }, region: 'Est' },
+  { type: 'Sorgho', rendement: 1.1, superficie: 42000, bounds: { minLon: 0.0, maxLon: 1.2, minLat: 11.8, maxLat: 12.5 }, region: 'Est' },
+  
+  // Région du Sud-Ouest (Gaoua) - Coton et mil
+  { type: 'Coton', rendement: 1.3, superficie: 78000, bounds: { minLon: -3.5, maxLon: -2.8, minLat: 10.0, maxLat: 10.8 }, region: 'Sud-Ouest' },
+  { type: 'Mil', rendement: 1.2, superficie: 48000, bounds: { minLon: -3.5, maxLon: -2.8, minLat: 10.0, maxLat: 10.8 }, region: 'Sud-Ouest' },
+  { type: 'Maïs', rendement: 1.8, superficie: 35000, bounds: { minLon: -3.5, maxLon: -2.8, minLat: 10.0, maxLat: 10.8 }, region: 'Sud-Ouest' },
+  
+  // Région du Centre-Est (Tenkodogo) - Céréales
+  { type: 'Sorgho', rendement: 1.1, superficie: 58000, bounds: { minLon: -0.8, maxLon: 0.2, minLat: 11.2, maxLat: 12.0 }, region: 'Centre-Est' },
+  { type: 'Mil', rendement: 1.0, superficie: 52000, bounds: { minLon: -0.8, maxLon: 0.2, minLat: 11.2, maxLat: 12.0 }, region: 'Centre-Est' },
+  
+  // Zones de riziculture (barrages et bas-fonds)
+  { type: 'Riz irrigué', rendement: 4.5, superficie: 28000, bounds: { minLon: -4.8, maxLon: -4.0, minLat: 10.8, maxLat: 11.4 }, region: 'Sud-Ouest' },
+  { type: 'Riz irrigué', rendement: 4.2, superficie: 15000, bounds: { minLon: -1.5, maxLon: -0.8, minLat: 11.5, maxLat: 12.2 }, region: 'Centre-Sud' },
 ];
 
 // Fonction pour vérifier si un point est dans une zone
