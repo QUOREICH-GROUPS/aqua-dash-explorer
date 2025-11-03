@@ -22,6 +22,8 @@ import { MapControls } from './MapControls';
 import { WeatherWidget } from './WeatherWidget';
 import { ZoneConfirmationDialog } from './ZoneConfirmationDialog';
 import { LayersControl } from './LayersControl';
+import { InteractiveLegend } from './InteractiveLegend';
+import { MeasurementTools } from './MeasurementTools';
 
 export const WaterMap = () => {
   const mapDiv = useRef<HTMLDivElement>(null);
@@ -573,6 +575,10 @@ export const WaterMap = () => {
 
       <div className="space-y-4">
         <LayersControl view={view} />
+        
+        <InteractiveLegend />
+        
+        <MeasurementTools view={view} />
         
         <Card className="shadow-soft">
           <CardHeader>
