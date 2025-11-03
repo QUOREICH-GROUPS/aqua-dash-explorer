@@ -49,7 +49,7 @@ export const WaterMap = () => {
     const regionsLayer = new FeatureLayer({
       url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Administrative_Divisions/FeatureServer/0',
       title: 'Régions du Burkina Faso',
-      definitionExpression: "ISO = 'BFA' AND LEVEL = 1",
+      definitionExpression: "COUNTRY = 'Burkina Faso'",
       opacity: 0.5,
       outFields: ['*'],
       renderer: {
@@ -72,7 +72,7 @@ export const WaterMap = () => {
     const provincesLayer = new FeatureLayer({
       url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Administrative_Divisions/FeatureServer/0',
       title: 'Provinces du Burkina Faso',
-      definitionExpression: "ISO = 'BFA' AND LEVEL = 2",
+      definitionExpression: "COUNTRY = 'Burkina Faso'",
       opacity: 0.4,
       visible: false,
       outFields: ['*'],
@@ -96,7 +96,7 @@ export const WaterMap = () => {
     const communesLayer = new FeatureLayer({
       url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Administrative_Divisions/FeatureServer/0',
       title: 'Communes du Burkina Faso',
-      definitionExpression: "ISO = 'BFA' AND LEVEL = 3",
+      definitionExpression: "COUNTRY = 'Burkina Faso'",
       opacity: 0.3,
       visible: false,
       outFields: ['*'],
