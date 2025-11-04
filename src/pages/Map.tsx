@@ -9,12 +9,12 @@ const Map = () => {
   return (
     <MainLayout>
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               Carte Interactive
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-sm sm:text-base text-muted-foreground">
               Analysez les plans d'eau avec l'IA géospatiale
             </p>
           </div>
@@ -23,7 +23,7 @@ const Map = () => {
 
         <WaterMap />
         
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
           <TemporalChart />
           <SatelliteDataPanel />
         </div>

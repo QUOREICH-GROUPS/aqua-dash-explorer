@@ -17,13 +17,11 @@ import { useFilterStore } from '@/stores/filterStore';
 import { useMapStore } from '@/stores/mapStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useWaterAnalysis } from '@/hooks/useWaterAnalysis';
-import { AnalysisPanel } from './AnalysisPanel';
-import { MapControls } from './MapControls';
-import { WeatherWidget } from './WeatherWidget';
 import { ZoneConfirmationDialog } from './ZoneConfirmationDialog';
-import { LayersControl } from './LayersControl';
-import { InteractiveLegend } from './InteractiveLegend';
-import { MeasurementTools } from './MeasurementTools';
+import { MapToolsPanel } from './MapToolsPanel';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Menu } from 'lucide-react';
 
 export const WaterMap = () => {
   const mapDiv = useRef<HTMLDivElement>(null);
@@ -33,6 +31,8 @@ export const WaterMap = () => {
   const [selectedFeatures, setSelectedFeatures] = useState<Graphic[]>([]);
   const [pendingGeometry, setPendingGeometry] = useState<Geometry | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const isMobile = useIsMobile();
   const { region, period, waterBodyType } = useFilterStore();
   const { setView: setMapView } = useMapStore();
   const { analyzeWaterBody, isAnalyzing, result } = useWaterAnalysis();
@@ -49,8 +49,9 @@ export const WaterMap = () => {
     const regionsLayer = new FeatureLayer({
       url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Administrative_Divisions/FeatureServer/0',
       title: 'Régions du Burkina Faso',
-      definitionExpression: "COUNTRY = 'Burkina Faso'",
+      definitionExpression: "COUNTRY = 'Burkina Faso' AND TYPE = 'Admin1'",
       opacity: 0.5,
+      visible: true,
       outFields: ['*'],
       renderer: {
         type: 'simple',
@@ -72,7 +73,7 @@ export const WaterMap = () => {
     const provincesLayer = new FeatureLayer({
       url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Administrative_Divisions/FeatureServer/0',
       title: 'Provinces du Burkina Faso',
-      definitionExpression: "COUNTRY = 'Burkina Faso'",
+      definitionExpression: "COUNTRY = 'Burkina Faso' AND TYPE = 'Admin2'",
       opacity: 0.4,
       visible: false,
       outFields: ['*'],
@@ -96,7 +97,7 @@ export const WaterMap = () => {
     const communesLayer = new FeatureLayer({
       url: 'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/World_Administrative_Divisions/FeatureServer/0',
       title: 'Communes du Burkina Faso',
-      definitionExpression: "COUNTRY = 'Burkina Faso'",
+      definitionExpression: "COUNTRY = 'Burkina Faso' AND TYPE = 'Admin3'",
       opacity: 0.3,
       visible: false,
       outFields: ['*'],
@@ -557,6 +558,23 @@ export const WaterMap = () => {
     handleClear();
   };
 
+  const toolsPanel = (
+    <MapToolsPanel
+      view={view}
+      bufferSize={bufferSize}
+      onBufferSizeChange={setBufferSize}
+      onDrawPoint={handleDrawPoint}
+      onDrawPolyline={handleDrawPolyline}
+      onDrawPolygon={handleDrawPolygon}
+      onClear={handleClear}
+      selectedFeatures={selectedFeatures}
+      region={region}
+      waterBodyType={waterBodyType}
+      result={result}
+      isAnalyzing={isAnalyzing}
+    />
+  );
+
   return (
     <>
       <ZoneConfirmationDialog
@@ -566,142 +584,40 @@ export const WaterMap = () => {
         onCancel={handleCancelAnalysis}
       />
       
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-        <Card className="shadow-soft overflow-hidden">
-          <div ref={mapDiv} className="h-[600px] w-full" />
-        </Card>
+      <div className="relative">
+        {/* Mobile: Floating button + Sheet */}
+        {isMobile && (
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+            <SheetTrigger asChild>
+              <Button
+                size="icon"
+                className="fixed bottom-4 right-4 z-50 h-14 w-14 rounded-full shadow-lg"
+              >
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+              {toolsPanel}
+            </SheetContent>
+          </Sheet>
+        )}
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          {/* Map Container */}
+          <div className="lg:col-span-2">
+            <Card className="shadow-soft overflow-hidden">
+              <div ref={mapDiv} className="h-[500px] md:h-[600px] lg:h-[700px] w-full" />
+            </Card>
+          </div>
+
+          {/* Desktop: Side Panel */}
+          {!isMobile && (
+            <div className="hidden lg:block">
+              {toolsPanel}
+            </div>
+          )}
+        </div>
       </div>
-
-      <div className="space-y-4">
-        <LayersControl view={view} />
-        
-        <InteractiveLegend />
-        
-        <MeasurementTools view={view} />
-        
-        <Card className="shadow-soft">
-          <CardHeader>
-            <CardTitle className="text-foreground">Outils de dessin</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Dessinez des formes sur la carte
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-3 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDrawPoint}
-                className="flex-col h-auto py-3"
-              >
-                <Circle className="h-5 w-5 mb-1" />
-                <span className="text-xs">Point</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDrawPolyline}
-                className="flex-col h-auto py-3"
-              >
-                <PenTool className="h-5 w-5 mb-1" />
-                <span className="text-xs">Ligne</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleDrawPolygon}
-                className="flex-col h-auto py-3"
-              >
-                <Square className="h-5 w-5 mb-1" />
-                <span className="text-xs">Polygone</span>
-              </Button>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-foreground">
-                  Buffer (m)
-                </label>
-                <Badge variant="secondary" className="font-mono">
-                  {bufferSize[0]}m
-                </Badge>
-              </div>
-              <Slider
-                value={bufferSize}
-                onValueChange={setBufferSize}
-                min={100}
-                max={5000}
-                step={100}
-                className="w-full"
-              />
-            </div>
-
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleClear}
-              className="w-full gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              Effacer tout
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-soft">
-          <CardHeader>
-            <CardTitle className="text-foreground">Géométries</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Éléments dessinés
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {selectedFeatures.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">
-                  {selectedFeatures.length} élément(s) sélectionné(s)
-                </p>
-                <div className="space-y-1">
-                  {selectedFeatures.map((feature, index) => (
-                    <div
-                      key={index}
-                      className="p-2 rounded bg-secondary/30 text-sm"
-                    >
-                      Type: {feature.geometry.type}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Aucune géométrie dessinée
-              </p>
-            )}
-
-            <div className="mt-4 p-3 rounded bg-muted/30 border border-border">
-              <p className="text-xs font-medium text-muted-foreground mb-1">
-                Filtres actifs
-              </p>
-              <div className="space-y-1">
-                <p className="text-sm text-foreground capitalize">
-                  {region === 'all' ? 'Toutes les régions' : region}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {waterBodyType === 'all' ? 'Tous types' : waterBodyType}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <MapControls />
-
-        <WeatherWidget />
-
-        <AnalysisPanel result={result} isAnalyzing={isAnalyzing} />
-      </div>
-    </div>
     </>
   );
 };
