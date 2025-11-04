@@ -1,12 +1,22 @@
-import { Waves, Menu, LayoutDashboard, Map } from 'lucide-react';
+import { Waves, Menu, LayoutDashboard, Map, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 export const Header = () => {
   const { toggleSidebar } = useSidebar();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -53,6 +63,34 @@ export const Header = () => {
             <Map className="h-4 w-4" />
             Carte IA
           </Button>
+
+          {user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <User className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Mon compte</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => signOut()} className="text-destructive">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Déconnexion
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button 
+              variant="default" 
+              size="sm"
+              onClick={() => navigate('/auth')}
+              className="gap-2"
+            >
+              <User className="h-4 w-4" />
+              Connexion
+            </Button>
+          )}
         </div>
       </div>
     </header>
