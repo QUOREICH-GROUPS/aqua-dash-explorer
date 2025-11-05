@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import { useSidebar } from '@/components/ui/sidebar';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { ThemeToggle } from './ThemeToggle';
+import { NotificationsPanel } from './NotificationsPanel';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,7 +51,7 @@ export const Header = () => {
             variant={location.pathname === '/' ? 'default' : 'ghost'} 
             size="sm"
             onClick={() => navigate('/')}
-            className="gap-2"
+            className="gap-2 hidden sm:flex"
           >
             <LayoutDashboard className="h-4 w-4" />
             Dashboard
@@ -58,17 +60,21 @@ export const Header = () => {
             variant={location.pathname === '/map' ? 'default' : 'ghost'} 
             size="sm"
             onClick={() => navigate('/map')}
-            className="gap-2"
+            className="gap-2 hidden sm:flex"
           >
             <Map className="h-4 w-4" />
             Carte IA
           </Button>
 
+          <ThemeToggle />
+          
+          {user && <NotificationsPanel />}
+
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <User className="h-5 w-5" />
+                <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
+                  <User className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

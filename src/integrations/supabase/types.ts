@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      analysis_history: {
+        Row: {
+          agriculture_data: Json | null
+          analysis_data: Json
+          created_at: string
+          geometry: Json
+          id: string
+          notes: string | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+          weather_data: Json | null
+          zone_name: string
+          zone_type: string
+        }
+        Insert: {
+          agriculture_data?: Json | null
+          analysis_data: Json
+          created_at?: string
+          geometry: Json
+          id?: string
+          notes?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+          weather_data?: Json | null
+          zone_name: string
+          zone_type: string
+        }
+        Update: {
+          agriculture_data?: Json | null
+          analysis_data?: Json
+          created_at?: string
+          geometry?: Json
+          id?: string
+          notes?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+          weather_data?: Json | null
+          zone_name?: string
+          zone_type?: string
+        }
+        Relationships: []
+      }
       favorite_zones: {
         Row: {
           coordinates: Json
@@ -41,6 +86,45 @@ export type Database = {
           user_id?: string
           zone_name?: string
           zone_type?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          metadata: Json | null
+          read_at: string | null
+          severity: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          metadata?: Json | null
+          read_at?: string | null
+          severity: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          metadata?: Json | null
+          read_at?: string | null
+          severity?: string
+          title?: string
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }

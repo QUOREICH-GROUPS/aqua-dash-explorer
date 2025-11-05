@@ -2,7 +2,7 @@ import { Droplets, TrendingUp, AlertTriangle, Activity } from 'lucide-react';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { IndicatorsTable } from '@/components/dashboard/IndicatorsTable';
 import { AgricultureCharts } from '@/components/dashboard/AgricultureCharts';
-import { AnalysisHistory } from '@/components/dashboard/AnalysisHistory';
+import { AnalysisHistoryEnhanced } from '@/components/dashboard/AnalysisHistoryEnhanced';
 import { useFilterStore } from '@/stores/filterStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
 
@@ -59,8 +59,8 @@ export const Dashboard = () => {
       {/* Indicators Table */}
       <IndicatorsTable />
 
-      {/* Analysis History */}
-      <AnalysisHistory />
+      {/* Analysis History Enhanced */}
+      <AnalysisHistoryEnhanced />
     </div>
   );
 };
