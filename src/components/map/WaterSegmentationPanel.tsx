@@ -2,14 +2,34 @@ import { useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useWaterSegmentation } from '@/hooks/useWaterSegmentation';
-import { Upload, Image as ImageIcon, Download, Loader2 } from 'lucide-react';
+import { Upload, Image as ImageIcon, Download, Loader2, MapPin } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useMapStore } from '@/stores/mapStore';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 export const WaterSegmentationPanel = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showLocationDialog, setShowLocationDialog] = useState(false);
+  const [latitude, setLatitude] = useState('12.3714');
+  const [longitude, setLongitude] = useState('-1.5197');
+  const [mapWidth, setMapWidth] = useState('0.05');
+  const [mapHeight, setMapHeight] = useState('0.05');
+  
   const { segmentWater, isProcessing, isModelLoading, result } = useWaterSegmentation();
+  const { addSegmentationToMap, view } = useMapStore();
+  const { toast } = useToast();
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -39,6 +59,38 @@ export const WaterSegmentationPanel = () => {
     link.download = 'water-segmentation.png';
     link.click();
   }, [result]);
+
+  const handleAddToMap = useCallback(() => {
+    if (!result) return;
+    
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+    const width = parseFloat(mapWidth);
+    const height = parseFloat(mapHeight);
+
+    if (isNaN(lat) || isNaN(lng) || isNaN(width) || isNaN(height)) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez entrer des coordonnées valides",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addSegmentationToMap(result, {
+      lat,
+      lng,
+      width,
+      height
+    });
+
+    setShowLocationDialog(false);
+    
+    toast({
+      title: "Ajouté à la carte",
+      description: `Zone d'eau détectée (${result.waterPercentage.toFixed(1)}%) ajoutée à la carte`,
+    });
+  }, [result, latitude, longitude, mapWidth, mapHeight, addSegmentationToMap, toast]);
 
   return (
     <Card className="w-full">
@@ -196,6 +248,90 @@ export const WaterSegmentationPanel = () => {
                   </>
                 )}
               </Button>
+              
+              {result && view && (
+                <Dialog open={showLocationDialog} onOpenChange={setShowLocationDialog}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Ajouter à la carte
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Positionner sur la carte</DialogTitle>
+                      <DialogDescription>
+                        Entrez les coordonnées géographiques et la taille de la zone détectée
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="latitude">Latitude</Label>
+                          <Input
+                            id="latitude"
+                            type="number"
+                            step="0.0001"
+                            value={latitude}
+                            onChange={(e) => setLatitude(e.target.value)}
+                            placeholder="12.3714"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="longitude">Longitude</Label>
+                          <Input
+                            id="longitude"
+                            type="number"
+                            step="0.0001"
+                            value={longitude}
+                            onChange={(e) => setLongitude(e.target.value)}
+                            placeholder="-1.5197"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="width">Largeur (degrés)</Label>
+                          <Input
+                            id="width"
+                            type="number"
+                            step="0.001"
+                            value={mapWidth}
+                            onChange={(e) => setMapWidth(e.target.value)}
+                            placeholder="0.05"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="height">Hauteur (degrés)</Label>
+                          <Input
+                            id="height"
+                            type="number"
+                            step="0.001"
+                            value={mapHeight}
+                            onChange={(e) => setMapHeight(e.target.value)}
+                            placeholder="0.05"
+                          />
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        💡 Conseil: 0.05° ≈ 5.5 km à l'équateur. Ajustez selon la taille réelle de votre image.
+                      </p>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowLocationDialog(false)}
+                      >
+                        Annuler
+                      </Button>
+                      <Button onClick={handleAddToMap}>
+                        <MapPin className="h-4 w-4 mr-2" />
+                        Confirmer
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              )}
             </div>
           </div>
         )}
