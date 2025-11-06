@@ -4,6 +4,7 @@ import { TemporalChart } from '@/components/map/TemporalChart';
 import { ExportButton } from '@/components/map/ExportButton';
 import { SatelliteDataPanel } from '@/components/map/SatelliteDataPanel';
 import { WeatherStationsPanel } from '@/components/map/WeatherStationsPanel';
+import { WaterSegmentationPanel } from '@/components/map/WaterSegmentationPanel';
 
 const Map = () => {
   return (
@@ -28,7 +29,10 @@ const Map = () => {
           <SatelliteDataPanel />
         </div>
         
-        <WeatherStationsPanel />
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
+          <WaterSegmentationPanel />
+          <WeatherStationsPanel />
+        </div>
       </div>
     </MainLayout>
   );
